@@ -3,6 +3,9 @@ Java program used to download videos from webex.
 
 Requires csv file that contains each users firstname, lastname, email.
 
-Admin name, email, and password are hardcoded. URL is hardcoded. Destination of files is hardcoded.
+Admin name, email, and password are hardcoded. URL is hardcoded. Destination of files is hardcoded. 
+Everything that is hardcode dependent is labeled with a TODO comment.
 
 Dependent on selenium chrome driver.
+
+I used eclispe to do the development and to sort out the dependencies.
