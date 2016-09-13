@@ -9,3 +9,7 @@ Everything that is hardcode dependent is labeled with a TODO comment.
 Dependent on selenium chrome driver.
 
 I used eclispe to do the development and to sort out the dependencies.
+
+Downloads folder should be empty when starting this download.
+
+Ment to run on MAC OSX
