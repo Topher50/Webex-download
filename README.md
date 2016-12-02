@@ -12,4 +12,4 @@ I used eclispe to do the development and to sort out the dependencies.
 
 Downloads folder should be empty when starting this download.
 
-Ment to run on MAC OSX
+Meant to run on MAC OSX
