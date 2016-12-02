@@ -6,7 +6,9 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.io.PrintWriter;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import org.apache.commons.io.FileUtils;
@@ -16,9 +18,12 @@ import org.openqa.selenium.Keys;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
+import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
+import org.openqa.selenium.remote.DesiredCapabilities;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
+
 
 public class WebexMain {
 	public static String admin;
@@ -26,44 +31,59 @@ public class WebexMain {
 	public static void main(String[] args) {
 		// TODO Auto-generated method stub
 		System.out.println("start");
+
+		System.setProperty("webdriver.chrome.driver", "./chromedriver");//TODO Specify path to chromedriver
 		
-		System.setProperty("webdriver.chrome.driver", "chromedriver path goes here");//TODO Specify path to chromedriver
+	
 		
-		WebDriver driver=new ChromeDriver();
+        Map<String, Object> prefs = new HashMap<String, Object>();
+        prefs.put("profile.default_content_settings.popups", 0);
+        prefs.put("profile.content_settings.exceptions.automatic_downloads.*.setting", 1 );
+        //Turns off download prompt
+        prefs.put("download.prompt_for_download", false);
+        
+        ChromeOptions options = new ChromeOptions();
+        options.setExperimentalOption("prefs", prefs);
+        options.addArguments("--start-maximized");
+        DesiredCapabilities cap = DesiredCapabilities.chrome();
+        cap.setCapability(ChromeOptions.CAPABILITY, options);
+        
+        WebDriver driver=new ChromeDriver(cap);
+		
 		driver.manage().timeouts().implicitlyWait(60,TimeUnit.SECONDS);
-		
-		String csvfile = System.getProperty("user.home") + "csv path here";//TODO path to csv
+
+		String csvfile = System.getProperty("user.home") + "/webexusers.csv";//TODO path to csv
 		String line = "";
 		String name = "";
 		String email = "";
-		
+
 		//hardcode Admin email, name, and password
 		String AdminEmail = ""; //TODO
 		String AdminName = ""; //TODO last name
 		String pass = ""; //TODO
 		//hardcode path where you want files to go
-		String destPath = "/Volumes/Untitled/TAKETWO/";
-		
+		String destPath = "/Volumes/Untitled/";
+
 		try {
 		BufferedReader br = new BufferedReader(new FileReader(csvfile));
 		PrintWriter failures = new PrintWriter("failures.txt", "UTF-8");
 		PrintWriter winners = new PrintWriter("winners.txt", "UTF-8");
 		login(driver, AdminEmail, pass);
-		
+
 		while( (line = br.readLine()) != null){
-			
+
 			String [] info = line.split(",");
 			if (info.length >= 4 && info[3].equals("x")) continue;
 			name = info[1];
 			email = info[2];
 			try{
-		
+
 			reassign(driver,email,AdminEmail,name);
-		
+
 			dothedownload(driver);
-			
+
 			movedata(email, destPath);
-		
+
 			reassign(driver,AdminEmail, email, AdminName);
 			winners.println(email);
 			System.out.println(email);
@@ -72,7 +92,7 @@ public class WebexMain {
 				System.out.println(name);
 				failures.println(email);
 				try{
-					File source = new File(System.getProperty("user.home") + "/Downloads");
+					File source = new File(System.getProperty("user.home") + "/Volumes/Software/Tools/webex");
 					FileUtils.cleanDirectory(source);
 					reassign(driver,AdminEmail, email,AdminName);
 				}catch(Exception e1){
@@ -80,9 +100,9 @@ public class WebexMain {
 				}
 				continue;
 			}
-		
+
 	}
-	
+
 	failures.close();
 	winners.close();
 	if(br != null) br.close();
@@ -113,24 +133,24 @@ public class WebexMain {
 
 	private static void dothedownload(WebDriver driver) throws InterruptedException {
 		// TODO Auto-generated method stub
-		
+
 		WebDriverWait wait = new WebDriverWait(driver, 60);
-		
+
 		driver.switchTo().frame("header");
 		driver.findElement(By.id("wcc-lnk-MC")).click();
 		driver.switchTo().frame("mainFrame");
 		driver.switchTo().frame("menu");
 		driver.switchTo().frame("treemenu");
 		driver.findElement(By.xpath("//a[@id='wcc-lnk-nbrServiceRecording']/span[2]")).click();
-		
+
 		do{
 			driver.switchTo().defaultContent();
 			driver.switchTo().frame("mainFrame");
-			driver.switchTo().frame("main");		
+			driver.switchTo().frame("main");
 			List<WebElement> mrbtns = driver.findElements(By.xpath("//a[contains(@id,'svc-lnk-more')]"));
 			List<WebElement> dbtns = driver.findElements(By.xpath("//a[contains(@id,'svc-lnk-download')]"));
-		
-		
+
+
 			for(WebElement mrbtn : mrbtns){
 				((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", mrbtn);
 				mrbtn.click();
@@ -138,14 +158,14 @@ public class WebexMain {
 				dbtns.get(mrbtns.indexOf(mrbtn)).click();
 				try {
 					Thread.sleep(30000);
-				} catch (InterruptedException e){} 
+				} catch (InterruptedException e){}
 			}
-		
+
 		}while(nextpage(driver));
 		do{
 				Thread.sleep(30000);
 		}while(dldnotdone());
-		
+
 	}
 
 
@@ -154,10 +174,29 @@ public class WebexMain {
 		driver.switchTo().window(admin);
 		driver.findElement(By.id("wcc-lnk-edituser")).click();
 		driver.switchTo().frame("main");
+		//uncheck active user filter
+		if ( driver.findElement(By.name("active")).isSelected() )
+		{
+		     driver.findElement(By.name("active")).click();
+		     Thread.sleep(2000);
+		}
+		
 		driver.findElement(By.name("searchEmail")).sendKeys(from);;
 		driver.findElement(By.name("searchUser")).click();
+		Thread.sleep(2000);
+		
+		if ( !driver.findElement(By.xpath("/html/body/table/tbody/tr[2]/td/table/tbody/tr[1]/td/table/tbody/tr/td/center/form/table/tbody/tr[1]/td/table[3]/tbody/tr[3]/td[1]/input")).isSelected() )
+		{
+			driver.findElement(By.xpath("/html/body/table/tbody/tr[2]/td/table/tbody/tr[1]/td/table/tbody/tr/td/center/form/table/tbody/tr[1]/td/table[3]/tbody/tr[3]/td[1]/input")).click();
+			driver.findElement(By.xpath("//input[@value='Submit']")).click();
+			Thread.sleep(5000);
+			driver.findElement(By.name("searchEmail")).sendKeys(from);;
+			driver.findElement(By.name("searchUser")).click();
+			Thread.sleep(5000);
+			
+		}
 		List<WebElement> links = driver.findElements(By.tagName("a"));
- 
+
 		for (int i = 1; i<links.size(); i=i+1)
 		{
 			if(links.get(i).getText().contains(name)){
@@ -165,17 +204,19 @@ public class WebexMain {
 				break;
 			}
 		}
-		
-		driver.findElement(By.cssSelector("input.btn.btn-success")).click();
-		Thread.sleep(5000);
-		driver.switchTo().window("ReassignRecordings");
+
+		//driver.findElement(By.cssSelector("input.btn.btn-success")).click();
+		Thread.sleep(2000);
+		driver.findElement(By.id("reassignRecording")).click();
+		driver.findElement(By.id("btn-reassign")).click();
+		driver.switchTo().window("ReassignAssets");
 		driver.findElement(By.name("searchKey")).sendKeys(to);
 		driver.findElement(By.name("search")).click();
 		driver.findElement(By.name("user")).click();
 		driver.findElement(By.cssSelector("input.btn.btn-success")).click();
 		Thread.sleep(5000);
 		driver.switchTo().window("OptionsWin");
-		driver.findElement(By.name("button1")).click(); 
+		driver.findElement(By.name("button1")).click();
 		driver.switchTo().window(portal);
 	}
 
@@ -195,7 +236,7 @@ public class WebexMain {
 	private static boolean dldnotdone() {
 		File folder = new File(System.getProperty("user.home") + "/Downloads");
 		File[] listfiles = folder.listFiles();
-		
+
 		for (int i=0; i<listfiles.length; i++){
 			if (listfiles[i].getName().contains(".arf.crdownload")){
 				return true;
@@ -207,13 +248,13 @@ public class WebexMain {
 
 
 	private static void login(WebDriver driver, String AdminEmail, String pass){
-		
+
 		WebDriverWait wait = new WebDriverWait(driver, 60);
-		
-		driver.get("webex url"); //TODO webex url
+
+		driver.get(""); //TODO webex url
 		driver.switchTo().frame("header");
 		driver.findElement(By.id("wcc-lnk-MW")).click();
-		driver.switchTo().window(driver.getWindowHandle()); 
+		driver.switchTo().window(driver.getWindowHandle());
 		driver.switchTo().frame("mainFrame");
 		driver.findElement(By.id("mwx-ipt-username")).sendKeys(AdminEmail);
 		driver.findElement(By.id("mwx-ipt-password")).sendKeys(pass);
@@ -231,7 +272,7 @@ public class WebexMain {
 		//driver.findElement(By.cssSelector("a.sa_menu_icon")).click();
 		driver.findElement(By.id("wcc-lnk-user")).click();
 		wait.until(ExpectedConditions.visibilityOf(driver.findElement(By.id("wcc-lnk-edituser"))));
-		
+
 	}
 
 }
