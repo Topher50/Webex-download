@@ -13,3 +13,5 @@ I used eclispe to do the development and to sort out the dependencies.
 Downloads folder should be empty when starting this download.
 
 Meant to run on MAC OSX
+
+NOTE: The Webex website is 'responsive'. You will need to set the maximum resolution for your display for the page to function as the script needs.
