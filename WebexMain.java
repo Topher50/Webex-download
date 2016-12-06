@@ -44,7 +44,7 @@ public class WebexMain {
         
         ChromeOptions options = new ChromeOptions();
         options.setExperimentalOption("prefs", prefs);
-        options.addArguments("--start-maximized");
+        options.addArguments("start-maximized");
         DesiredCapabilities cap = DesiredCapabilities.chrome();
         cap.setCapability(ChromeOptions.CAPABILITY, options);
         
@@ -52,7 +52,7 @@ public class WebexMain {
 		
 		driver.manage().timeouts().implicitlyWait(60,TimeUnit.SECONDS);
 
-		String csvfile = System.getProperty("user.home") + "/webexusers.csv";//TODO path to csv
+		String csvfile = System.getProperty("user.home") + "/webex/webexusers.csv";//TODO path to csv
 		String line = "";
 		String name = "";
 		String email = "";
@@ -77,11 +77,11 @@ public class WebexMain {
 			name = info[1];
 			email = info[2];
 			try{
-
+			//assign to admin
 			reassign(driver,email,AdminEmail,name);
 
 			dothedownload(driver);
-
+			//assign back to user
 			movedata(email, destPath);
 
 			reassign(driver,AdminEmail, email, AdminName);
@@ -185,6 +185,7 @@ public class WebexMain {
 		driver.findElement(By.name("searchUser")).click();
 		Thread.sleep(2000);
 		
+		//user has to be active to assign recordings back to them
 		if ( !driver.findElement(By.xpath("/html/body/table/tbody/tr[2]/td/table/tbody/tr[1]/td/table/tbody/tr/td/center/form/table/tbody/tr[1]/td/table[3]/tbody/tr[3]/td[1]/input")).isSelected() )
 		{
 			driver.findElement(By.xpath("/html/body/table/tbody/tr[2]/td/table/tbody/tr[1]/td/table/tbody/tr/td/center/form/table/tbody/tr[1]/td/table[3]/tbody/tr[3]/td[1]/input")).click();
@@ -251,7 +252,8 @@ public class WebexMain {
 
 		WebDriverWait wait = new WebDriverWait(driver, 60);
 
-		driver.get(""); //TODO webex url
+		driver.get("");//TODO webex url
+		driver.manage().window().maximize();
 		driver.switchTo().frame("header");
 		driver.findElement(By.id("wcc-lnk-MW")).click();
 		driver.switchTo().window(driver.getWindowHandle());
@@ -267,6 +269,7 @@ public class WebexMain {
 		newwin.keyDown(Keys.SHIFT).click(link).keyUp(Keys.SHIFT).build().perform();
 		for(String winHandle : driver.getWindowHandles()){
 		    driver.switchTo().window(winHandle);
+		    driver.manage().window().maximize();
 		    admin = winHandle;
 		}
 		//driver.findElement(By.cssSelector("a.sa_menu_icon")).click();
